@@ -28,13 +28,25 @@ namespace AspNetCore.ReCaptcha.Tests
         }
 
         [Fact]
-        public void ReCaptchaGeneratorReturnsReCaptchaForV3()
+        public void ReCaptchaGeneratorWhenNonceNonNullReturnsReCaptchaForV3()
         {
             var result = ReCaptchaGenerator.ReCaptchaV3(new Uri("https://www.google.com/recaptcha/"), "test", "test", "test", "test", 1, "nonce");
 
             Assert.NotNull(result);
             Assert.Equal(
-                @"<input id=""g-recaptcha-response-1"" name=""g-recaptcha-response"" type=""hidden"" value="""" /><script src=""https://www.google.com/recaptcha/api.js?render=test&hl=test""></script><script nonce=""nonce"">function updateReCaptcha1() {grecaptcha.execute('test', {action: 'test'}).then(function(token){document.getElementById('g-recaptcha-response-1').value = token;});}grecaptcha.ready(function() {setInterval(updateReCaptcha1, 100000); updateReCaptcha1()});</script>
+                @"<input id=""g-recaptcha-response-1"" name=""g-recaptcha-response"" type=""hidden"" value="""" /><script src=""https://www.google.com/recaptcha/api.js?render=test&hl=test"" nonce=""nonce""></script><script nonce=""nonce"">function updateReCaptcha1() {grecaptcha.execute('test', {action: 'test'}).then(function(token){document.getElementById('g-recaptcha-response-1').value = token;});}grecaptcha.ready(function() {setInterval(updateReCaptcha1, 100000); updateReCaptcha1()});</script>
+",
+                result.ToHtmlString());
+        }
+
+        [Fact]
+        public void ReCaptchaGeneratorWhenNonceNullReturnsReCaptchaForV3()
+        {
+            var result = ReCaptchaGenerator.ReCaptchaV3(new Uri("https://www.google.com/recaptcha/"), "test", "test", "test", "test", 1, null);
+
+            Assert.NotNull(result);
+            Assert.Equal(
+                @"<input id=""g-recaptcha-response-1"" name=""g-recaptcha-response"" type=""hidden"" value="""" /><script src=""https://www.google.com/recaptcha/api.js?render=test&hl=test""></script><script>function updateReCaptcha1() {grecaptcha.execute('test', {action: 'test'}).then(function(token){document.getElementById('g-recaptcha-response-1').value = token;});}grecaptcha.ready(function() {setInterval(updateReCaptcha1, 100000); updateReCaptcha1()});</script>
 ",
                 result.ToHtmlString());
         }
@@ -55,7 +67,7 @@ namespace AspNetCore.ReCaptcha.Tests
             const string expiredCallback = "test";
 
             // Act
-            IHtmlContent htmlContent = ReCaptchaGenerator.ReCaptchaV2(baseUrl, siteKey, size, theme, language, 
+            IHtmlContent htmlContent = ReCaptchaGenerator.ReCaptchaV2(baseUrl, siteKey, size, theme, language,
                 callback, errorCallback, expiredCallback, autoTheme);
 
             // Assert

@@ -31,7 +31,7 @@ namespace AspNetCore.ReCaptcha
         /// <param name="expiredCallback">Google ReCaptcha expired callback method. Used in v2 ReCaptcha.</param>
         /// <param name="autoTheme">Indicates whether the theme is automatically set to 'dark' based on the user's system settings.</param>
         /// <returns></returns>
-        public static IHtmlContent ReCaptchaV2(Uri baseUrl, string siteKey, string size, string theme, string language, 
+        public static IHtmlContent ReCaptchaV2(Uri baseUrl, string siteKey, string size, string theme, string language,
             string callback, string errorCallback, string expiredCallback, bool autoTheme = false, string nonce = null)
         {
             var content = new HtmlContentBuilder();
@@ -92,13 +92,11 @@ namespace AspNetCore.ReCaptcha
 
         public static IHtmlContent ReCaptchaV3(Uri baseUrl, string siteKey, string action, string language, string callBack, int id, string nonce = null)
         {
+            var nonceAttribute = string.IsNullOrEmpty(nonce) ? string.Empty : @$" nonce=""{nonce}""";
             var content = new HtmlContentBuilder();
             content.AppendHtml(@$"<input id=""g-recaptcha-response-{id}"" name=""g-recaptcha-response"" type=""hidden"" value="""" />");
-            content.AppendFormat(@"<script src=""{0}api.js?render={1}&hl={2}""></script>", baseUrl, siteKey, language);
-            content.AppendHtml("<script");
-            if (!string.IsNullOrEmpty(nonce))
-                content.AppendFormat(" nonce=\"{0}\"", nonce);
-            content.AppendHtml(">");
+            content.AppendHtml(@$"<script src=""{baseUrl}api.js?render={siteKey}&hl={language}""{nonceAttribute}></script>");
+            content.AppendHtml($"<script{nonceAttribute}>");
             content.AppendHtml($"function updateReCaptcha{id}() {{");
             content.AppendFormat("grecaptcha.execute('{0}', {{action: '{1}'}}).then(function(token){{", siteKey, action);
             content.AppendHtml($"document.getElementById('g-recaptcha-response-{id}').value = token;");
