@@ -1,4 +1,7 @@
 using System;
+using System.Net;
+using System.Reflection.Metadata;
+using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -50,7 +53,8 @@ namespace AspNetCore.ReCaptcha
 
             content.AppendFormat("></div>");
             content.AppendLine();
-            content.AppendFormat(@"<script src=""{0}api.js?hl={1}"" defer></script>", baseUrl, language);
+            content.AppendFormat(@"<script src=""{0}api.js?hl={1}""", baseUrl, language);
+            content.AppendNonce(nonce, " defer></script>");
 
             if (autoTheme)
             {
@@ -92,11 +96,13 @@ namespace AspNetCore.ReCaptcha
 
         public static IHtmlContent ReCaptchaV3(Uri baseUrl, string siteKey, string action, string language, string callBack, int id, string nonce = null)
         {
-            var nonceAttribute = string.IsNullOrEmpty(nonce) ? string.Empty : @$" nonce=""{nonce}""";
             var content = new HtmlContentBuilder();
             content.AppendHtml(@$"<input id=""g-recaptcha-response-{id}"" name=""g-recaptcha-response"" type=""hidden"" value="""" />");
-            content.AppendHtml(@$"<script src=""{baseUrl}api.js?render={siteKey}&hl={language}""{nonceAttribute}></script>");
-            content.AppendHtml($"<script{nonceAttribute}>");
+            content.AppendFormat(@"<script src=""{0}api.js?render={1}&hl={2}""", baseUrl, siteKey, language);
+            content.AppendNonce(nonce, "></script>");
+            content.AppendHtml("");
+            content.AppendHtml("<script");
+            content.AppendNonce(nonce,">");
             content.AppendHtml($"function updateReCaptcha{id}() {{");
             content.AppendFormat("grecaptcha.execute('{0}', {{action: '{1}'}}).then(function(token){{", siteKey, action);
             content.AppendHtml($"document.getElementById('g-recaptcha-response-{id}').value = token;");
@@ -107,6 +113,15 @@ namespace AspNetCore.ReCaptcha
             content.AppendLine();
 
             return content;
+        }
+
+        private static IHtmlContentBuilder AppendNonce(this IHtmlContentBuilder builder, string nonce, string closingTag)
+        {
+            if (!string.IsNullOrWhiteSpace(nonce))
+                builder.AppendFormat(" nonce=\"{0}\"", nonce);
+
+            builder.AppendHtml(closingTag);
+            return builder;
         }
     }
 }
